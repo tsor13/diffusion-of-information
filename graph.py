@@ -14,9 +14,11 @@ class Graph:
         self.matrix = adjacency_matrix
         self.n = adjacency_matrix.shape[0]
         assert self.n == adjacency_matrix.shape[1]
+
         # holds all graph nodes, same indices as adjacency matrix
         self.nodes = np.array(nodes)
         assert self.n == self.nodes.size
+
         # holds all previous decisions of agents. -1 is default (no action)
         self.actions = np.full(self.n, -1)
 
@@ -44,4 +46,3 @@ class Graph:
             if action != -1:
                 adjacent_actions.append(action)
         return adjacent_actions
-
