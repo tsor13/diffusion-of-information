@@ -37,6 +37,6 @@ class Agent():
         # Calculate probabilities based on private info and observations
         # This assumes equal probability of wells being active. It also discards
         # the marginal probability of the given info and observations, which is a constant for all 3 p values
-        p = [ prod([self.q[i,j]**observations[j] for j in range(3)]) for i in range(3) ]
+        p = [ np.prod([self.q[i,j]**observations[j] for j in range(3)]) for i in range(3) ]
 
         return np.argmax(p)
