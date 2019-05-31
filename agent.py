@@ -38,5 +38,10 @@ class Agent():
         # This assumes equal probability of wells being active. It also discards
         # the marginal probability of the given info and observations, which is a constant for all 3 p values
         p = [ np.prod([self.q[i,j]**observations[j] for j in range(3)]) for i in range(3) ]
-
-        return np.argmax(p)
+        print(observations)
+        print(p)
+        # Check for ties, choose randomly
+        winning_indecies = p == np.max(p)
+        choice = np.random.choice(np.where(winning_indecies)[0])
+        print('choice:',choice)
+        return choice

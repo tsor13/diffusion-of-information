@@ -8,6 +8,7 @@ import matplotlib.patches as mpatches
 import matplotlib.animation
 
 Q_DEFAULT = np.array([[.5,.25,.25],[.25,.5,.25],[.25,.25,.5]])
+Q_WEAK_INFO = np.array([[.4,.3,.3],[.3,.4,.3],[.3,.3,.4]])
 # 1-cycle
 def one_cycle_graph(q_matrix = Q_DEFAULT):
     '''Creates and returns Graph object using
@@ -177,23 +178,25 @@ def test_information_cascade(g,first_agent_num=None,well_position=None):
     #return the list of actions
     return g.actions
 
+def testing():
+    ###  TESTING  ###
+
+    # We will iterate through this graph to test diffusion
+    graph_list = [one_cycle_graph(),
+                  two_cycle_graph(),
+                  complete_graph(),
+                  ad_hoc_graph()]
+
+    # This SHOULD illustrate an information cascade in each Graph g
+    print('With cascade')
+    updating_list = []
+    for g in graph_list:
+        updating_list.append(test_information_cascade(g))
 
 
+    ##uncomment to test on a single graph
+    #a2 = test_information_cascade(two_cycle_graph())
 
-###  TESTING  ###
-
-# We will iterate through this graph to test diffusion
-graph_list = [one_cycle_graph(),
-              two_cycle_graph(),
-              complete_graph(),
-              ad_hoc_graph()]
-
-# This SHOULD illustrate an information cascade in each Graph g
-print('With cascade')
-updating_list = []
-for g in graph_list:
-    updating_list.append(test_information_cascade(g))
-
-
-##uncomment to test on a single graph
-#a2 = test_information_cascade(two_cycle_graph())
+if __name__ == '__main__':
+    # testing()
+    pass
