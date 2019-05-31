@@ -151,9 +151,10 @@ def test_information_cascade(g,first_agent_num=None,well_position=None):
         color_map.append(['cyan','orange','lime'][action]) # agent visits well 0, 1, or 2
 
     #create and draw networkx graph
+    plt.title('Starting Point:' + str(first_agent_num)
+              + '\nCorrect Well:' + str(well_position))
     G = nx.Graph(g.matrix)
     nx.draw(G,node_color=color_map,with_labels=True)
-    #plt.legend() networkx legends are finnicky...
     well_0 = mpatches.Patch(color='cyan', label='Well 0')
     well_1 = mpatches.Patch(color='orange', label='Well 1')
     well_2 = mpatches.Patch(color='lime', label='Well 2')
