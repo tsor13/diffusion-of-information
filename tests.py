@@ -5,6 +5,7 @@ import pdb
 import networkx as nx
 from matplotlib import pyplot as plt
 import matplotlib.patches as mpatches
+import matplotlib.animation
 
 Q_DEFAULT = np.array([[.5,.25,.25],[.25,.5,.25],[.25,.25,.5]])
 # 1-cycle
@@ -133,11 +134,11 @@ def test_information_cascade(g,first_agent_num=None,well_position=None):
     agents_left = set(range(g.n))
     action_queue = [first_agent_num]
     agents_left.remove(first_agent_num)
-
+    action_order = []
     while(len(action_queue) > 0):
         agent_num = action_queue.pop(0)
         g.node_act_information_cascade(agent_num, well_position)
-
+        action_order.append(agent_num)
         # Add the un-tagged neighbors to the action queue
         for neighbor in g.adjacent_nodes(agent_num):
             if neighbor in agents_left:
@@ -145,21 +146,32 @@ def test_information_cascade(g,first_agent_num=None,well_position=None):
                 agents_left.remove(neighbor)
 
 
-    #set colors for each available action
-    color_map = []
-    for action in g.actions:
-        color_map.append(['cyan','orange','lime'][action]) # agent visits well 0, 1, or 2
+    # set colors for each available action.
+    # Tracks a full color map for each node after each agent decision
+    c_map = ['gray'] * g.n
+    color_maps = [c_map ]
 
-    #create and draw networkx graph
-    plt.title('Starting Point:' + str(first_agent_num)
-              + '\nCorrect Well:' + str(well_position))
+    for action, order in zip(g.actions, action_order):
+
+        c_map[order] = ['cyan','orange','lime'][action] # agent visits well 0, 1, or 2
+        color_maps.append(c_map.copy())
+
+    fig, ax = plt.subplots(figsize=(6,4))
     G = nx.Graph(g.matrix)
-    nx.draw(G,node_color=color_map,with_labels=True)
-    well_0 = mpatches.Patch(color='cyan', label='Well 0')
-    well_1 = mpatches.Patch(color='orange', label='Well 1')
-    well_2 = mpatches.Patch(color='lime', label='Well 2')
+    pos = nx.spring_layout(G)
+    def update(num):
+        ax.clear()
+        plt.title(f"Starting Point: {first_agent_num}\nCorrect Well:{well_position}")
+        well_0 = mpatches.Patch(color='cyan', label='Well 0')
+        well_1 = mpatches.Patch(color='orange', label='Well 1')
+        well_2 = mpatches.Patch(color='lime', label='Well 2')
+        plt.legend(handles=[well_0, well_1, well_2])
 
-    plt.legend(handles=[well_0, well_1, well_2])
+        nx.draw(G,pos=pos,node_color=color_maps[(num+1) % len(color_maps)],with_labels = True)
+
+    # create and draw networkx graph
+
+    ani = matplotlib.animation.FuncAnimation(fig, update, interval=1000, repeat=True)
     plt.show()
 
     #return the list of actions
