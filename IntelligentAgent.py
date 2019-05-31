@@ -1,35 +1,81 @@
 from agent import Agent
 import numpy as np
+import networkx as nx
+from matplotlib import pyplot as plt
+import matplotlib.patches as mpatches
+import matplotlib.animation
 
 class IntelligentAgent():
 
-    def __init__(self, conn_index):
+    def __init__(self, conn_index, util_matrix):
         self.conn_index = conn_index
+        self.util_matrix = util_matrix
 
-    def MEU(self, conn_matrix, agents_decisions, util_matrix):
+    def MEU(self, conn_matrix, agents_decisions):
         """
         """
+        # print("agent":)
         utilities = []
-        m, n = util_matrix.shape
+        m, n = self.util_matrix.shape
         agent_count = len(conn_matrix[0, :])
 
         for decision_idx in range(m):
             utility = 0
             for i, conn_strength in enumerate(conn_matrix[self.conn_index, :]):
+                
                 other_agent_decision_idx = agents_decisions[i]
-                utility += conn_strength * util_matrix[decision_idx, other_agent_decision_idx]
+                utility += conn_strength * self.util_matrix[decision_idx, other_agent_decision_idx]
 
             utilities.append(utility)
         return np.argmax(utilities)
 
+def update_agents_decision(conn_matrix, agents, agents_decisions):
+    new_agents_decisions = []
+    for i, decision in enumerate(agents_decisions):    
+        new_agents_decisions.append(
+            agents[i].MEU(conn_matrix, agents_decisions)
+        )
+    return new_agents_decisions
 
+
+def animate(conn_matrix, agents, agents_decisions):
+    G = nx.from_numpy_matrix(conn_matrix)
+    pos = nx.spring_layout(G)
+    n = len(conn_matrix[:, 0])
+    fig, ax = plt.subplots(figsize=(6,4))
+
+    def update(num):
+        ax.clear()
+        color_map = []
+        for x in agents_decisions:
+            if x == 0: 
+                color_map.append("red")
+            elif x == 1:
+                color_map.append("blue")
+            else:
+                color_map.append("white")
+    
+        nx.draw(
+                G, pos, edge_color='black',width=1,linewidths=1,\
+                node_size=500, node_color = color_map , alpha=0.9,\
+                labels={node:node for node in G.nodes()}
+                )
+
+        edge_labels = {(j, i):conn_matrix[i, j] for j in range(n) for i in range(n)}
+        nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels, font_color='red')
+        agents_decisions = update_agents_decision(conn_matrix, agents, agents_decisions)
+
+
+    ani = matplotlib.animation.FuncAnimation(fig, update, interval=1000, repeat=True)
+    plt.axis('off')
+    plt.show()
 
 
 def test():
     conn_matrix = np.array([
-        [0, 1, 1], #influence/conn on self is zero since undecided
-        [2, 0, 3],
-        [1, 1, 0]
+        [np.inf, 2, 1], #ballot cast for self so inf
+        [2, 0, 3],  #influence/conn on self is zero since undecided
+        [1, 3, np.inf] #ballot cast for self so inf
     ])
     agents_decisions = np.array([
          0, #dem vote
@@ -40,12 +86,22 @@ def test():
     #and so only needs be a 2x2 matrix
     util_matrix = np.array([
         [2, 1],
-        [0, 1]
+        [1, 1]
     ])
 
-    agent_1 = IntelligentAgent(1)
+    agent_0 = IntelligentAgent(0, util_matrix)
+    agent_1 = IntelligentAgent(1, util_matrix)
+    agent_2 = IntelligentAgent(2, util_matrix)
 
-    assert agent_1.MEU(conn_matrix, agents_decisions, util_matrix) == 0
+    agents = [agent_0, agent_1, agent_2]
+
+    assert agent_1.MEU(conn_matrix, agents_decisions) == 0
     print("SUCCESS: MEU")
 
-# test()
+    print(agents_decisions)
+    new_decisions = update_agents_decision(conn_matrix, agents, agents_decisions)
+    print(new_decisions)
+    # animate(conn_matrix, agents, agents_decisions)
+
+
+test()
