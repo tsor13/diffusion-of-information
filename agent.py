@@ -1,12 +1,4 @@
 import numpy as np, numpy.random
-from scipy.optimize import minimize
-from scipy.optimize import LinearConstraint
-import autograd.numpy as a_np
-from autograd import grad, jacobian
-
-from sympy import solve, Poly, Eq, Function, exp
-from sympy.abc import x, y, z, a, b, c
-import tools
 
 class Agent():
     """
@@ -14,56 +6,37 @@ class Agent():
     three water wells to choose to draw from
 
     variables:
-    dist_params - ndarray (3 x 1) - the parameters of the tri-noulli distribution
+    q_params - ndarray (3 x 3) - the parameters of the tri-noulli distribution
+    for the likelihood of receiving an accurate signal.
+    ex. --> An uninformed agent would have a q_matrix as follows:
+    [[1/3, 1/3, 1/3],
+     [1/3, 1/3, 1/3],
+     [1/3, 1/3, 1/3]]
+
+    ex. --> An informed agent might have a q matrix like the following, where
+    the probability that the signal matches reality is higher
+    [[1/4, 1/2, 1/4],
+     [1/2, 1/4, 1/4],
+     [1/4, 1/4, 1/2]]
+
     """
 
-    def __init__(self, dist_params, change_location = False):
-        #prior distribution parameters
-        self.location = np.array([0.,0.])
-        self.dist_params = dist_params
-        if change_location:
-            domain = np.linspace(-1.,1.,101)
-            self.location = np.array([np.random.choice(domain),np.random.choice(domain)])
+    def __init__(self, q_matrix):
+        self.q = q_matrix
 
-
-
-    def get_MLE(self, observations):
-        """
-        Paramters:
-        observations - ndarray (n x 3):
-
-        Returns ndarray (n x 3):  most likely parameters given the observations
-        """
-        # theta_1 = 3
-        # theta_2 = 6
-        # theta_3 = 12
-
-        # liklihood = lambda x: -(x[0]**theta_1 * x[1]**theta_2 * (x[0] - x[1])**theta_3)
-        # liklihood_jac = jacobian(liklihood)
-        # x0 = np.ones(3)/3
-        # linear_constraint = LinearConstraint([[1, 0], [0, 1]], [0, 0], [np.inf, np.inf])
-        # res = minimize(liklihood, x0, method='trust-constr', jac=liklihood_jac,  constraints=[linear_constraint])
-
-
-    def update_dist_params(self, observations, c):
-        """
-        c - float - confidence weight of other agents decisions
-        observations - ndarray (n x 3)
-        """
-        observations = np.array(observations)
-        if observations.size == 0:
-            return
-        observed_dist = np.array([tools.percent_correct(observations,0),
-                                  tools.percent_correct(observations,1),
-                                  tools.percent_correct(observations,2)])
-        n = observations.size
-        #update prior to posterior
-        self.dist_params = self.dist_params + c * n * observed_dist
-        #normalize
-        self.dist_params /= sum(self.dist_params)
-
-    def act(self):
+    def act_information_cascade(self, correct_well_index, observations):
         """
             returns highest probable good choice
         """
-        return np.argmax(self.dist_params)
+        private_info = np.random.choice([0,1,2], p = self.q[correct_well_index])
+
+        # Add private info to observations
+        observations = observations.copy()
+        observations[private_info] += 1
+
+        # Calculate probabilities based on private info and observations
+        # This assumes equal probability of wells being active. It also discards
+        # the marginal probability of the given info and observations, which is a constant for all 3 p values
+        p = [ np.prod([self.q[i,j]**observations[j] for j in range(3)]) for i in range(3) ]
+
+        return np.argmax(p)

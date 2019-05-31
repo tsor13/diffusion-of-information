@@ -1,91 +1,180 @@
 from graph import Graph
 from agent import Agent
-from agent_factory import AgentFactory
 import numpy as np
 import pdb
+import networkx as nx
+from matplotlib import pyplot as plt
 
-
-factory = AgentFactory()
+Q_DEFAULT = np.array([[.5,.25,.25],[.25,.5,.25],[.25,.25,.5]])
 # 1-cycle
-matrix1 = np.array([[0,1,0,0,0,0,1],
-                    [1,0,1,0,0,0,0],
-                    [0,1,0,1,0,0,0],
-                    [0,0,1,0,1,0,0],
-                    [0,0,0,1,0,1,0],
-                    [0,0,0,0,1,0,1],
-                    [1,0,0,0,0,1,0]])
-well_solution = 0
-# add agents as nodes
-n = matrix1.shape[0]
-nodes1 = []
-# example nodes matrix
-for i in range(n):
-    good_agent = factory.create_informed_agent(well_solution, False)
-    nodes1.append(good_agent)
-# change agent 1 to bad agent
-bad_agent = factory.create_uninformed_agent()
-nodes1[1] = bad_agent
+def one_cycle_graph(q_matrix = Q_DEFAULT):
+    '''Creates and returns Graph object using
+       the given 1-cycle adjacency matrix.
+    '''
 
-# create graph
-g1 = Graph(matrix1, nodes1)
+    #adjacency matrix
+    matrix1 = np.array([[0,1,0,0,0,0,1],
+                        [1,0,1,0,0,0,0],
+                        [0,1,0,1,0,0,0],
+                        [0,0,1,0,1,0,0],
+                        [0,0,0,1,0,1,0],
+                        [0,0,0,0,1,0,1],
+                        [1,0,0,0,0,1,0]])
 
-##############################
-# Example code for having agents act and update info
-# have node 0 act
-action0 = g1.node_act(0)
-print(action0)
-# update node 1 dist_params
-actions = g1.adjacent_actions(1)
-g1.nodes[1].update_dist_params(actions,c=.1)
-g1.node_act(1)
-# example data
-print(g1.matrix)
-print(g1.adjacent_nodes(0))
-print(g1.actions)
-##############################
+    #initialize node vector of 'agent' objects
+    nodes1 = np.full(matrix1.shape[0], create_agent_list(matrix1.shape[0],q_matrix))
+
+    #return Graph object, which takes an adjacency matrix
+    # and Agent node-vector as parameters
+    return Graph(matrix1, nodes1)
+
 
 # 2-cycle
-matrix2 = np.array([[0,1,1,0,0,1,1],
-                    [1,0,1,1,0,0,1],
-                    [1,1,0,1,1,0,0],
-                    [0,1,1,0,1,1,0],
-                    [0,0,1,1,0,1,1],
-                    [1,0,0,1,1,0,1],
-                    [1,1,0,0,1,1,0]])
-nodes2 = np.full(matrix2.shape[0], bad_agent)
-g2 = Graph(matrix2, nodes2)
+def two_cycle_graph(q_matrix = Q_DEFAULT):
+    '''Creates and returns Graph object using
+       the given 2-cycle adjacency matrix.
+    '''
+
+    #adjacency matrix
+    matrix2 = np.array([[0,1,1,0,0,1,1],
+                        [1,0,1,1,0,0,1],
+                        [1,1,0,1,1,0,0],
+                        [0,1,1,0,1,1,0],
+                        [0,0,1,1,0,1,1],
+                        [1,0,0,1,1,0,1],
+                        [1,1,0,0,1,1,0]])
+
+    #initialize node vector of Agent objects
+    nodes2 = np.full(matrix2.shape[0], create_agent_list(matrix2.shape[0],q_matrix))
+
+    #return Graph object, which takes an adjacency matrix
+    # and Agent node-vector as parameters
+    return Graph(matrix2, nodes2)
+
 
 # complete
-matrixc = np.array([[0,1,1,1,1,1,1],
-                    [1,0,1,1,1,1,1],
-                    [1,1,0,1,1,1,1],
-                    [1,1,1,0,1,1,1],
-                    [1,1,1,1,0,1,1],
-                    [1,1,1,1,1,0,1],
-                    [1,1,1,1,1,1,0]])
-nodesc = np.full(matrixc.shape[0], bad_agent)
-gc = Graph(matrixc, nodesc)
+def complete_graph(q_matrix = Q_DEFAULT):
+    '''Creates and returns Graph object using
+       the given 2-cycle adjacency matrix.
+    '''
+
+    #adjacency matrix
+    matrixc = np.array([[0,1,1,1,1,1,1],
+                        [1,0,1,1,1,1,1],
+                        [1,1,0,1,1,1,1],
+                        [1,1,1,0,1,1,1],
+                        [1,1,1,1,0,1,1],
+                        [1,1,1,1,1,0,1],
+                        [1,1,1,1,1,1,0]])
+
+    #initialize node vector of Agent objects
+    nodesc = np.full(matrixc.shape[0], create_agent_list(matrixc.shape[0],q_matrix))
+
+    #return Graph object, which takes an adjacency matrix
+    # and Agent node-vector as parameters
+    return Graph(matrixc, nodesc)
+
 
 # ad hoc
-adhoc = np.zeros((17,17))
-adhoc[0,[1,2]] = 1
-adhoc[1,[0,2]] = 1
-adhoc[2,[0,1,3]] = 1
-adhoc[3,[2,4,8]] = 1
-adhoc[4,[3,5,6]] = 1
-adhoc[5,[4,6,7]] = 1
-adhoc[6,[4,5,7,8,9]] = 1
-adhoc[7,[5,6,9,16]] = 1
-adhoc[8,[3,6,9,10]] = 1
-adhoc[9,[6,7,8,11]] = 1
-adhoc[10,[8,11,12]] = 1
-adhoc[11,[9,10,13,14]] = 1
-adhoc[12,[10,13]] = 1
-adhoc[13,[11,12,14,15]] = 1
-adhoc[14,[11,13,15,16]] = 1
-adhoc[15,[13,14,16]] = 1
-adhoc[16,[7,14,15]] = 1
+def ad_hoc_graph(q_matrix = Q_DEFAULT):
+    '''Creates and returns Graph object using
+       the given adhoc adjacency matrix.
+    '''
 
-nodes_adhoc = np.full(matrixc.shape[0], bad_agent)
-g_adhoc = Graph(adhoc, nodes_adhoc)
-print(g_adhoc.adjacent_nodes(11))
+    #adjacency matrix
+    adhoc = np.zeros((17,17))
+    adhoc[0,[1,2]] = 1
+    adhoc[1,[0,2]] = 1
+    adhoc[2,[0,1,3]] = 1
+    adhoc[3,[2,4,8]] = 1
+    adhoc[4,[3,5,6]] = 1
+    adhoc[5,[4,6,7]] = 1
+    adhoc[6,[4,5,7,8,9]] = 1
+    adhoc[7,[5,6,9,16]] = 1
+    adhoc[8,[3,6,9,10]] = 1
+    adhoc[9,[6,7,8,11]] = 1
+    adhoc[10,[8,11,12]] = 1
+    adhoc[11,[9,10,13,14]] = 1
+    adhoc[12,[10,13]] = 1
+    adhoc[13,[11,12,14,15]] = 1
+    adhoc[14,[11,13,15,16]] = 1
+    adhoc[15,[13,14,16]] = 1
+    adhoc[16,[7,14,15]] = 1
+
+    #initialize node vector of Agent objects
+    nodes_adhoc = np.full(adhoc.shape[0], create_agent_list(adhoc.shape[0],q_matrix))
+
+
+    #return Graph object, which takes an adjacency matrix
+    # and Agent node-vector as parameters
+    return Graph(adhoc, nodes_adhoc)
+
+
+def create_agent_list(n,q_matrix = None):
+    '''Create a list of Agent objects of length n
+       for use in initializing a Graph object.
+    '''
+    # Default q matrix is .4 on diagonals, .3 elsewhere
+    if q_matrix is None:
+        q_matrix = np.array([[.4,.3,.3],[.3,.4,.3],[.3,.3,.4]])
+
+    return [Agent(q_matrix) for _ in range(n)]
+
+def test_information_cascade(g,first_agent_num=None,well_position=None):
+    """ Run a day's worth of agent decisions """
+    # If no well position or first agent is given, pick one randomly
+    if well_position == None:
+        well_position = np.random.choice([0,1,2])
+
+    if first_agent_num == None:
+        first_agent_num = np.random.choice(list(range(7)))
+
+    agents_left = set(range(g.n))
+    action_queue = [first_agent_num]
+    agents_left.remove(first_agent_num)
+
+    while(len(action_queue) > 0):
+        agent_num = action_queue.pop(0)
+        g.node_act_information_cascade(agent_num, well_position)
+
+        # Add the un-tagged neighbors to the action queue
+        for neighbor in g.adjacent_nodes(agent_num):
+            if neighbor in agents_left:
+                action_queue.append(neighbor)
+                agents_left.remove(neighbor)
+
+
+    #set colors for each available action
+    color_map = []
+    for action in g.actions:
+        color_map.append(['cyan','orange','lime'][action]) # agent visits well 0, 1, or 2
+
+    #create and draw networkx graph
+    G = nx.Graph(g.matrix)
+    nx.draw(G,node_color=color_map,with_labels=True)
+    #plt.legend() networkx legends are finnicky...
+    plt.show()
+
+    #return the list of actions
+    return g.actions
+
+
+
+
+###  TESTING  ###
+
+# We will iterate through this graph to test diffusion
+graph_list = [one_cycle_graph(),
+              two_cycle_graph(),
+              complete_graph(),
+              ad_hoc_graph()]
+
+# This SHOULD illustrate an information cascade in each Graph g
+print('With cascade')
+updating_list = []
+for g in graph_list:
+    updating_list.append(test_information_cascade(g))
+
+
+##uncomment to test on a single graph
+#a2 = test_information_cascade(two_cycle_graph())
