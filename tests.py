@@ -4,6 +4,7 @@ import numpy as np
 import pdb
 import networkx as nx
 from matplotlib import pyplot as plt
+import matplotlib.patches as mpatches
 
 Q_DEFAULT = np.array([[.5,.25,.25],[.25,.5,.25],[.25,.25,.5]])
 # 1-cycle
@@ -153,6 +154,11 @@ def test_information_cascade(g,first_agent_num=None,well_position=None):
     G = nx.Graph(g.matrix)
     nx.draw(G,node_color=color_map,with_labels=True)
     #plt.legend() networkx legends are finnicky...
+    well_0 = mpatches.Patch(color='cyan', label='Well 0')
+    well_1 = mpatches.Patch(color='orange', label='Well 1')
+    well_2 = mpatches.Patch(color='lime', label='Well 2')
+
+    plt.legend(handles=[well_0, well_1, well_2])
     plt.show()
 
     #return the list of actions
