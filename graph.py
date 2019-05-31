@@ -26,7 +26,6 @@ class Graph:
         """ has node agent_num act and stores the action """
         #   Get adjacent actions
         neighbor_observations = self.parse_adjacent_actions( self.adjacent_actions(agent_num) )
-        print("neighbor obs:", neighbor_observations)
         action = self.nodes[agent_num].act_information_cascade(current_well, neighbor_observations)
         self.actions[agent_num] = action
         return action
@@ -47,7 +46,6 @@ class Graph:
 
         for node in adj_nodes:
             action = self.actions[node]
-            print('node:',node,"action:",action)
             if action != -1:
                 adjacent_actions.append(action)
         return adjacent_actions
