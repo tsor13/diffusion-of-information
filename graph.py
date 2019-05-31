@@ -31,33 +31,6 @@ class Graph:
         self.actions[agent_num] = action
         return action
 
-    def run_day(self, first_agent_num = None, well_position = None):
-        """ Run a day's worth of agent decisions """
-        # If no well position or first agent is given, pick one randomly
-        if well_position == None:
-            well_position = np.random.choice([0,1,2])
-
-        if first_agent_num == None:
-            first_agent_num = np.random.choice(list(range(7)))
-
-        agents_left = set(range(self.n))
-        action_queue = [first_agent_num]
-        agents_left.remove(first_agent_num)
-
-        while(len(action_queue) > 0):
-            agent_num = action_queue.pop(0)
-            self.node_act_information_cascade(agent_num, well_position)
-
-            # Add the un-tagged neighbors to the action queue
-            for neighbor in self.adjacent_nodes(agent_num):
-                if neighbor in agents_left:
-                    action_queue.append(neighbor)
-                    agents_left.remove(neighbor)
-
-
-        print(self.actions)
-        return
-
     def adjacent_nodes(self, agent_num):
         """ returns list of adjacent nodes """
         adj = []
