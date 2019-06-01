@@ -19,17 +19,24 @@ class Graph:
         self.nodes = np.array(nodes)
         assert self.n == self.nodes.size
 
-        # holds all previous decisions of agents. -1 is default (no action)
-        self.actions = np.full(self.n, -1)
+        #initialize depending on type of graph (IC or DI)
+        # holds all current policies of agents. 0 is default (hare)
+        if np.allclose(nodes,np.zeros_like(nodes)):
+            self.actions = np.zeros_like(nodes)
+
+        # holds previous decisions of agents. -1 is default (no action)
+        else:
+            self.actions = np.full(self.n, -1)
 
     def node_act_information_cascade(self, agent_num, current_well):
         """ has node agent_num act and stores the action """
         #   Get adjacent actions
-        print(agent_num)
         neighbor_observations = self.parse_adjacent_actions( self.adjacent_actions(agent_num) )
+        print("neighbor obs:", neighbor_observations)
         action = self.nodes[agent_num].act_information_cascade(current_well, neighbor_observations)
         self.actions[agent_num] = action
         return action
+
 
     def node_act_diffusion(self, agent_num):
         """ has node agent_num act and stores the action """

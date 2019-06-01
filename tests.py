@@ -8,9 +8,7 @@ import matplotlib.patches as mpatches
 import matplotlib.animation
 
 Q_DEFAULT = np.array([[.5,.25,.25],[.25,.5,.25],[.25,.25,.5]])
-Q_WEAK_INFO = np.array([[.4,.3,.3],[.3,.4,.3],[.3,.3,.4]])
 # 1-cycle
-
 def one_cycle_graph(q_matrix = Q_DEFAULT, diffusion=True):
     '''Creates and returns Graph object using
        the given 1-cycle adjacency matrix.
@@ -148,7 +146,7 @@ def test_information_cascade(g,first_agent_num=None,well_position=None):
         well_position = np.random.choice([0,1,2])
 
     if first_agent_num == None:
-        first_agent_num = np.random.choice(list(range(7)))
+        first_agent_num = np.random.choice(list(range(g.n)))
 
     agents_left = set(range(g.n))
     action_queue = [first_agent_num]
@@ -196,6 +194,7 @@ def test_information_cascade(g,first_agent_num=None,well_position=None):
     #return the list of actions
     return g.actions
 
+
 def test_diffusion(g,first_agent_num=None):
     """ Run a day's worth of agent decisions """
 
@@ -206,14 +205,9 @@ def test_diffusion(g,first_agent_num=None):
     action_queue = g.adjacent_nodes(first_agent_num)
     [agents_left.remove(n) for n in g.adjacent_nodes(first_agent_num)]
 
-    c_map = ['gray'] * g.n
-    color_map = [c_map]
     while(len(action_queue) > 0):
         agent_num = action_queue.pop(0)
-        policy = g.node_act_diffusion(agent_num)
-
-        c_map[agent_num] = ['gray','cyan'][policy]
-        color_map.append(c_map.copy())
+        g.node_act_diffusion(agent_num)
 
         # Add the un-tagged neighbors to the action queue
         for neighbor in g.adjacent_nodes(agent_num):
@@ -222,7 +216,11 @@ def test_diffusion(g,first_agent_num=None):
                 agents_left.remove(neighbor)
 
 
-    
+    #set colors for each available action
+    color_map = []
+    for action in g.actions:
+        color_map.append(['cyan','orange'][action]) # agent visits well 0, 1, or 2
+
     #create and draw networkx graph
     plt.title('Starting Point:' + str(first_agent_num))
     G = nx.Graph(g.matrix)
@@ -238,17 +236,17 @@ def test_diffusion(g,first_agent_num=None):
 
 
 
-def testing():
-    ###  TESTING  ###
+###  TESTING  ###
+def test_IC():
+    # This SHOULD illustrate an information cascade in each Graph g
+    print('Information Cascade')
 
     # We will iterate through this graph to test diffusion
-    graph_list = [one_cycle_graph(diffusion=False),
-                  two_cycle_graph(diffusion=False),
-                  complete_graph(diffusion=False),
-                  ad_hoc_graph(diffusion=False)]
+    graph_list = [one_cycle_graph(),
+                  two_cycle_graph(),
+                  complete_graph(),
+                  ad_hoc_graph()]
 
-    # This SHOULD illustrate an information cascade in each Graph g
-    print('With cascade')
     updating_list = []
     for g in graph_list:
         updating_list.append(test_information_cascade(g))
@@ -268,7 +266,3 @@ def test_DI():
     updating_list = []
     for g in graph_list:
         updating_list.append(test_diffusion(g,first_agent_num=0))
-
-if __name__ == '__main__':
-    # testing()
-    pass
