@@ -139,7 +139,7 @@ def create_agent_list(n,q_matrix = None):
 
     return [Agent(q_matrix) for _ in range(n)]
 
-def test_information_cascade(g,first_agent_num=None,well_position=None):
+def test_information_cascade(g,filename=None,first_agent_num=None,well_position=None):
     """ Run a day's worth of agent decisions """
     # If no well position or first agent is given, pick one randomly
     if well_position == None:
@@ -170,7 +170,7 @@ def test_information_cascade(g,first_agent_num=None,well_position=None):
 
     for action, order in zip(g.actions, action_order):
 
-        c_map[order] = ['cyan','orange','lime'][action] # agent visits well 0, 1, or 2
+        c_map[int(order)] = ['cyan','orange','lime'][int(action)] # agent visits well 0, 1, or 2
         color_maps.append(c_map.copy())
 
     fig, ax = plt.subplots(figsize=(6,4))
@@ -189,6 +189,9 @@ def test_information_cascade(g,first_agent_num=None,well_position=None):
     # create and draw networkx graph
 
     ani = matplotlib.animation.FuncAnimation(fig, update, interval=1000, repeat=True)
+    # Uncomment to allow saving animations in .gif format
+    # if filename:
+    #     ani.save(filename)
     plt.show()
 
     #return the list of actions
@@ -242,14 +245,15 @@ def test_IC():
     print('Information Cascade')
 
     # We will iterate through this graph to test diffusion
-    graph_list = [one_cycle_graph(),
-                  two_cycle_graph(),
-                  complete_graph(),
-                  ad_hoc_graph()]
+    graph_list = [one_cycle_graph(diffusion=False),
+                  two_cycle_graph(diffusion=False),
+                  complete_graph(diffusion=False),
+                  ad_hoc_graph(diffusion=False)]
 
     updating_list = []
-    for g in graph_list:
-        updating_list.append(test_information_cascade(g))
+    names = ['output/one_cycle_cascade.gif','output/two_cycle_cascade.gif','output/complete_cycle_cascade.gif','output/ad_hoc_cascade.gif']
+    for name,g in zip(names, graph_list):
+        updating_list.append(test_information_cascade(g,filename = name))
 
 
     ##uncomment to test on a single graph

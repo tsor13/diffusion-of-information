@@ -19,14 +19,7 @@ class Graph:
         self.nodes = np.array(nodes)
         assert self.n == self.nodes.size
 
-        #initialize depending on type of graph (IC or DI)
-        # holds all current policies of agents. 0 is default (hare)
-        if np.allclose(nodes,np.zeros_like(nodes)):
-            self.actions = np.zeros_like(nodes)
-
-        # holds previous decisions of agents. -1 is default (no action)
-        else:
-            self.actions = np.full(self.n, -1)
+        self.actions = - np.ones(self.n)
 
     def node_act_information_cascade(self, agent_num, current_well):
         """ has node agent_num act and stores the action """

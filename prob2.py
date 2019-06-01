@@ -63,7 +63,7 @@ class DiffusionGraph():
 
         return adj
 
-    def run(self,utility_matrix = DEFAULT_UTILITY,early_adopters = [0]):
+    def run(self,filename=None,utility_matrix = DEFAULT_UTILITY,early_adopters = [0]):
         # Reset
         self.nodes = np.zeros(self.n)
         # Set up with early adopters
@@ -114,4 +114,6 @@ class DiffusionGraph():
 
         # create and draw networkx graph
         ani = matplotlib.animation.FuncAnimation(fig, update, interval=1000, repeat=True)
+        if filename:
+            ani.save(filename)
         plt.show()
