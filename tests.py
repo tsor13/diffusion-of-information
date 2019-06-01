@@ -10,7 +10,8 @@ import matplotlib.animation
 Q_DEFAULT = np.array([[.5,.25,.25],[.25,.5,.25],[.25,.25,.5]])
 Q_WEAK_INFO = np.array([[.4,.3,.3],[.3,.4,.3],[.3,.3,.4]])
 # 1-cycle
-def one_cycle_graph(q_matrix = Q_DEFAULT):
+
+def one_cycle_graph(q_matrix = Q_DEFAULT, diffusion=True):
     '''Creates and returns Graph object using
        the given 1-cycle adjacency matrix.
     '''
@@ -24,16 +25,20 @@ def one_cycle_graph(q_matrix = Q_DEFAULT):
                         [0,0,0,0,1,0,1],
                         [1,0,0,0,0,1,0]])
 
-    #initialize node vector of 'agent' objects
-    nodes1 = np.full(matrix1.shape[0], create_agent_list(matrix1.shape[0],q_matrix))
+    #initialize node vector of policy 0 (i.e. hare)
+    if diffusion:
+        nodes1 = np.full(matrix1.shape[0], np.zeros_like(matrix1.shape[0]))
+
+    #initialize node vector of Agent objects
+    else:
+        nodes1 = np.full(matrix1.shape[0], create_agent_list(matrix1.shape[0],q_matrix))
 
     #return Graph object, which takes an adjacency matrix
     # and Agent node-vector as parameters
     return Graph(matrix1, nodes1)
 
-
 # 2-cycle
-def two_cycle_graph(q_matrix = Q_DEFAULT):
+def two_cycle_graph(q_matrix = Q_DEFAULT, diffusion=True):
     '''Creates and returns Graph object using
        the given 2-cycle adjacency matrix.
     '''
@@ -47,16 +52,20 @@ def two_cycle_graph(q_matrix = Q_DEFAULT):
                         [1,0,0,1,1,0,1],
                         [1,1,0,0,1,1,0]])
 
+    #initialize node vector of policy 0 (i.e. hare)
+    if diffusion:
+        nodes2 = np.full(matrix2.shape[0], np.zeros_like(matrix2.shape[0]))
+
     #initialize node vector of Agent objects
-    nodes2 = np.full(matrix2.shape[0], create_agent_list(matrix2.shape[0],q_matrix))
+    else:
+        nodes2 = np.full(matrix2.shape[0], create_agent_list(matrix2.shape[0],q_matrix))
 
     #return Graph object, which takes an adjacency matrix
     # and Agent node-vector as parameters
     return Graph(matrix2, nodes2)
 
-
 # complete
-def complete_graph(q_matrix = Q_DEFAULT):
+def complete_graph(q_matrix = Q_DEFAULT, diffusion=True):
     '''Creates and returns Graph object using
        the given 2-cycle adjacency matrix.
     '''
@@ -70,8 +79,13 @@ def complete_graph(q_matrix = Q_DEFAULT):
                         [1,1,1,1,1,0,1],
                         [1,1,1,1,1,1,0]])
 
+    #initialize node vector of policy 0 (i.e. hare)
+    if diffusion:
+        nodesc = np.full(matrixc.shape[0], np.zeros_like(matrixc.shape[0]))
+
     #initialize node vector of Agent objects
-    nodesc = np.full(matrixc.shape[0], create_agent_list(matrixc.shape[0],q_matrix))
+    else:
+        nodesc = np.full(matrixc.shape[0], create_agent_list(matrixc.shape[0],q_matrix))
 
     #return Graph object, which takes an adjacency matrix
     # and Agent node-vector as parameters
@@ -79,7 +93,7 @@ def complete_graph(q_matrix = Q_DEFAULT):
 
 
 # ad hoc
-def ad_hoc_graph(q_matrix = Q_DEFAULT):
+def ad_hoc_graph(q_matrix = Q_DEFAULT, diffusion=True):
     '''Creates and returns Graph object using
        the given adhoc adjacency matrix.
     '''
@@ -104,9 +118,13 @@ def ad_hoc_graph(q_matrix = Q_DEFAULT):
     adhoc[15,[13,14,16]] = 1
     adhoc[16,[7,14,15]] = 1
 
-    #initialize node vector of Agent objects
-    nodes_adhoc = np.full(adhoc.shape[0], create_agent_list(adhoc.shape[0],q_matrix))
+    #initialize node vector of policy 0 (i.e. hare)
+    if diffusion:
+        nodes_adhoc = np.full(adhoc.shape[0], np.zeros_like(adhoc.shape[0]))
 
+    #initialize node vector of Agent objects
+    else:
+        nodes_adhoc = np.full(adhoc.shape[0], create_agent_list(adhoc.shape[0],q_matrix))
 
     #return Graph object, which takes an adjacency matrix
     # and Agent node-vector as parameters
@@ -178,14 +196,56 @@ def test_information_cascade(g,first_agent_num=None,well_position=None):
     #return the list of actions
     return g.actions
 
+def test_diffusion(g,first_agent_num=None):
+    """ Run a day's worth of agent decisions """
+
+    if first_agent_num == None:
+        first_agent_num = np.random.choice(list(range(g.n)))
+
+    agents_left = set(range(g.n))
+    action_queue = g.adjacent_nodes(first_agent_num)
+    [agents_left.remove(n) for n in g.adjacent_nodes(first_agent_num)]
+
+    c_map = ['gray'] * g.n
+    color_map = [c_map]
+    while(len(action_queue) > 0):
+        agent_num = action_queue.pop(0)
+        policy = g.node_act_diffusion(agent_num)
+
+        c_map[agent_num] = ['gray','cyan'][policy]
+        color_map.append(c_map.copy())
+
+        # Add the un-tagged neighbors to the action queue
+        for neighbor in g.adjacent_nodes(agent_num):
+            if neighbor in agents_left:
+                action_queue.append(neighbor)
+                agents_left.remove(neighbor)
+
+
+    
+    #create and draw networkx graph
+    plt.title('Starting Point:' + str(first_agent_num))
+    G = nx.Graph(g.matrix)
+    nx.draw(G,node_color=color_map,with_labels=True)
+    stag = mpatches.Patch(color='cyan', label='Stag')
+    hare = mpatches.Patch(color='orange', label='Hare')
+
+    plt.legend(handles=[stag, hare])
+    plt.show()
+
+    #return the list of actions
+    return g.actions
+
+
+
 def testing():
     ###  TESTING  ###
 
     # We will iterate through this graph to test diffusion
-    graph_list = [one_cycle_graph(),
-                  two_cycle_graph(),
-                  complete_graph(),
-                  ad_hoc_graph()]
+    graph_list = [one_cycle_graph(diffusion=False),
+                  two_cycle_graph(diffusion=False),
+                  complete_graph(diffusion=False),
+                  ad_hoc_graph(diffusion=False)]
 
     # This SHOULD illustrate an information cascade in each Graph g
     print('With cascade')
@@ -196,6 +256,18 @@ def testing():
 
     ##uncomment to test on a single graph
     #a2 = test_information_cascade(two_cycle_graph())
+
+def test_DI():
+    print('Diffusion of Innovation')
+
+    graph_list = [one_cycle_graph(),
+                  two_cycle_graph(),
+                  complete_graph(),
+                  ad_hoc_graph()]
+
+    updating_list = []
+    for g in graph_list:
+        updating_list.append(test_diffusion(g,first_agent_num=0))
 
 if __name__ == '__main__':
     # testing()

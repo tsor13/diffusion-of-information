@@ -43,5 +43,5 @@ class Agent():
         # Check for ties, choose randomly
         winning_indecies = p == np.max(p)
         choice = np.random.choice(np.where(winning_indecies)[0])
-        print('choice:',choice)
+
         return choice

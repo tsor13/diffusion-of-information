@@ -31,6 +31,23 @@ class Graph:
         self.actions[agent_num] = action
         return action
 
+    def node_act_diffusion(self, agent_num):
+        """ has node agent_num act and stores the action """
+        utility = np.array([[1,1],
+                            [0,2]])
+        #   Get adjacent actions
+        neighbors = self.adjacent_nodes(agent_num)
+        n_policies = self.adjacent_actions(0)
+        temp = [0,0]
+        for p in n_policies:
+            temp[0] += utility[1][p]
+            temp[1] += utility[0][p]
+
+        new_policy = np.argmax(temp)
+        self.actions[agent_num] = new_policy
+        return new_policy
+
+
     def adjacent_nodes(self, agent_num):
         """ returns list of adjacent nodes """
         adj = []
