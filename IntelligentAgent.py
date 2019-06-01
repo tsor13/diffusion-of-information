@@ -8,13 +8,13 @@ import matplotlib.animation
 class IntelligentAgent():
 
     def __init__(self, conn_index, util_matrix):
+        #agent index
         self.conn_index = conn_index
         self.util_matrix = util_matrix
 
     def MEU(self, conn_matrix, agents_decisions):
         """
         """
-        # print("agent":)
         utilities = []
         m, n = self.util_matrix.shape
         agent_count = len(conn_matrix[0, :])
@@ -22,7 +22,6 @@ class IntelligentAgent():
         for decision_idx in range(m):
             utility = 0
             for i, conn_strength in enumerate(conn_matrix[self.conn_index, :]):
-                
                 other_agent_decision_idx = agents_decisions[i]
                 utility += conn_strength * self.util_matrix[decision_idx, other_agent_decision_idx]
 
@@ -43,9 +42,10 @@ def animate(conn_matrix, agents, agents_decisions):
     pos = nx.spring_layout(G)
     n = len(conn_matrix[:, 0])
     fig, ax = plt.subplots(figsize=(6,4))
-
+    
     def update(num):
         ax.clear()
+        nonlocal agents_decisions
         color_map = []
         for x in agents_decisions:
             if x == 0: 
@@ -63,8 +63,8 @@ def animate(conn_matrix, agents, agents_decisions):
 
         edge_labels = {(j, i):conn_matrix[i, j] for j in range(n) for i in range(n)}
         nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels, font_color='red')
-        agents_decisions = update_agents_decision(conn_matrix, agents, agents_decisions)
 
+        agents_decisions = update_agents_decision(conn_matrix, agents, agents_decisions)
 
     ani = matplotlib.animation.FuncAnimation(fig, update, interval=1000, repeat=True)
     plt.axis('off')
@@ -73,35 +73,42 @@ def animate(conn_matrix, agents, agents_decisions):
 
 def test():
     conn_matrix = np.array([
-        [np.inf, 2, 1], #ballot cast for self so inf
+        [0, 2, 1], #ballot cast for self so inf
         [2, 0, 3],  #influence/conn on self is zero since undecided
-        [1, 3, np.inf] #ballot cast for self so inf
+        [1, 3, 0] 
     ])
     agents_decisions = np.array([
          0, #dem vote
-        -1, #curr agent undecided -- doenst really matter what value this is
+        -1, #curr agent undecided -- doenst really since self influence is zero on conn_matrix
          1  #rep vote
     ])
+    dominator = 100000
     #util matrix doesnt need to take into account utility of other agent
     #and so only needs be a 2x2 matrix
-    util_matrix = np.array([
+    und_util_matrix = np.array([
         [2, 1],
         [1, 1]
     ])
+    rep_util_matrix = np.array([
+        [0, 0],
+        [dominator, dominator]
+    ])
+    dem_util_matrix = np.array([
+        [dominator, dominator],
+        [0, 0]
+    ])
 
-    agent_0 = IntelligentAgent(0, util_matrix)
-    agent_1 = IntelligentAgent(1, util_matrix)
-    agent_2 = IntelligentAgent(2, util_matrix)
+    agent_0 = IntelligentAgent(0, dem_util_matrix)
+    agent_1 = IntelligentAgent(1, und_util_matrix)
+    agent_2 = IntelligentAgent(2, rep_util_matrix)
 
     agents = [agent_0, agent_1, agent_2]
 
     assert agent_1.MEU(conn_matrix, agents_decisions) == 0
+    assert np.allclose(update_agents_decision(conn_matrix, agents, agents_decisions), np.array([0, 0, 1]))
     print("SUCCESS: MEU")
 
-    print(agents_decisions)
-    new_decisions = update_agents_decision(conn_matrix, agents, agents_decisions)
-    print(new_decisions)
-    # animate(conn_matrix, agents, agents_decisions)
+    animate(conn_matrix, agents, agents_decisions)
 
 
 test()
