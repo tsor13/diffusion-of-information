@@ -34,6 +34,7 @@ def update_agents_decision(conn_matrix, agents, agents_decisions):
         new_agents_decisions.append(
             agents[i].MEU(conn_matrix, agents_decisions)
         )
+    new_agents_decisions[2], = np.random.randint(3, size=1)
     return new_agents_decisions
 
 
